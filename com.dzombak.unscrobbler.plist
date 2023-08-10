@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.dzombak.unscrobbler</string>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/cdzombak/code/Unscrobbler/venv/bin/python3</string>
+		<string>/Users/cdzombak/code/Unscrobbler/Unscrobbler.py</string>
+		<string>--no-dry-run</string>
+		<string>-m</string>
+		<string>40</string>
+		<string>--max-page</string>
+		<string>4</string>
+		<string>-t</string>
+		<string>/Users/cdzombak/.local/unscrobbler/titles.txt</string>
+		<string>--log-dir</string>
+		<string>/Users/cdzombak/.local/unscrobbler/log</string>
+	</array>
+	<key>StandardErrorPath</key>
+	<string>/Users/cdzombak/.local/unscrobbler/log/stderr.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/cdzombak/.local/unscrobbler/log/stdout.log</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>8</integer>
+		<key>Minute</key>
+		<integer>30</integer>
+	</dict>
+	<key>WorkingDirectory</key>
+	<string>/Users/cdzombak/code/Unscrobbler</string>
+</dict>
+</plist>

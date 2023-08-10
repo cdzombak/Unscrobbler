@@ -2,8 +2,9 @@
 
 # cdzombak's fork
 
-TODO(cdzombak): Document this fork.
-TODO(cdzombak): Add launchd job example.
+This fork is a noninteractive version of Unscrobbler, suitable for scheduled use eg. as a launchd job.
+
+**TODO(cdzombak): Document this fork.**
 
 ---
 
