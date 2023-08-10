@@ -45,6 +45,8 @@ class UnscrobblerConfig:
     first_hr: Optional[int]
     last_hr: Optional[int]
     start_page: Optional[int]
+    geckodriver_log_file: Optional[IO[str]]
+    max_page: Optional[int]
 
 
 def _unscrobbler_log_deleted_item(logfile: Optional[IO[str]], d: Dict):
@@ -131,8 +133,8 @@ def unscrobbler(cfg: UnscrobblerConfig) -> int:
         return False
 
     deletions = 0
-    logging.info("Launching Firefox")
-    with webdriver.Firefox() as driver:
+    logging.debug("Launching Firefox")
+    with webdriver.Firefox(service=webdriver.FirefoxService(log_output=cfg.geckodriver_log_file)) as driver:
         driver.get(login_page_url)
         WebDriverWait(driver, 10).until(lambda d: "Login" in d.title)
         driver.find_element(by=By.ID, value="id_username_or_email").send_keys(cfg.lastfm_username)
@@ -229,10 +231,12 @@ def unscrobbler(cfg: UnscrobblerConfig) -> int:
                                                   value=".pagination-next > a:nth-child(1)")
             except NoSuchElementException:
                 logging.info("Finished last page! Exiting.")
+            if cfg.max_page and library_page_num >= cfg.max_page:
+                logging.debug(f"Reached max page ({cfg.max_page}). Exiting.")
                 break
 
-            driver.get(next_button.get_attribute("href"))
             library_page_num += 1
+            driver.get(next_button.get_attribute("href"))
 
         logging.info(f"{'[dry run]' if is_dry_run else '' }Removed {deletions} Scrobbles "
                      f"(configured max: {cfg.max_removals}).")
@@ -260,6 +264,8 @@ if __name__ == '__main__':
                         help='Only remove Scrobbles from the given year.')
     parser.add_argument('--start-page', type=int, default=1,
                         help='Last.fm library page to start at.')
+    parser.add_argument('--max-page', type=int, default=20,
+                        help='Last.fm library page to end at.')
     parser.add_argument('--first-hr', type=int, default=None,
                         help='First hour of the day in which to remove Scrobbles (0-23). (If used, '
                              '--last-hr must also be given.)')
@@ -304,10 +310,11 @@ if __name__ == '__main__':
             delete_titles = {line.rstrip('\n') for line in f}
 
     log_file_path = None
+    geckodriver_log_path = None
+    now_str = datetime.now().strftime('%Y%m%d-%H%M%S')
     if args.log_dir:
-        log_file_name = f"unscrobbler_{datetime.now().strftime('%Y%m%d-%H%M%S')}" \
-                        f"{'_dryrun' if is_dry_run else ''}.log.jsonl"
-        log_file_path = Path(args.log_dir) / log_file_name
+        log_file_path = Path(args.log_dir) / f"unscrobbler_{now_str}{'_dryrun' if is_dry_run else ''}.log.jsonl"
+        geckodriver_log_path = Path(args.log_dir) / f"geckodriver_{now_str}.log"
 
     lastfm_user = os.getenv('LASTFM_USERNAME')
     lastfm_pass = os.getenv('LASTFM_PASSWORD')
@@ -318,22 +325,26 @@ if __name__ == '__main__':
 
     result = EXIT_SUCCESS
     try:
-        with open(log_file_path, mode='xt', encoding='utf8') if log_file_path \
-                else nullcontext() as log_file:
-            result = unscrobbler(UnscrobblerConfig(
-                lastfm_username=lastfm_user,
-                lastfm_password=lastfm_pass,
-                dry_run=is_dry_run,
-                delete_artists=delete_artists,
-                delete_titles=delete_titles,
-                year=args.year,
-                log_file=log_file,
-                first_hr=args.first_hr,
-                last_hr=args.last_hr,
-                max_removals=args.max_removals,
-                start_page=args.start_page,
-            ))
+        with open(geckodriver_log_path, mode='xt', encoding='utf8') if geckodriver_log_path \
+                else nullcontext() as geckodriver_log_file:
+            with open(log_file_path, mode='xt', encoding='utf8') if log_file_path \
+                    else nullcontext() as log_file:
+                result = unscrobbler(UnscrobblerConfig(
+                    lastfm_username=lastfm_user,
+                    lastfm_password=lastfm_pass,
+                    dry_run=is_dry_run,
+                    delete_artists=delete_artists,
+                    delete_titles=delete_titles,
+                    year=args.year,
+                    log_file=log_file,
+                    first_hr=args.first_hr,
+                    last_hr=args.last_hr,
+                    max_removals=args.max_removals,
+                    start_page=args.start_page,
+                    geckodriver_log_file=geckodriver_log_file,
+                    max_page=args.max_page,
+                ))
     except FileExistsError as e:
-        logging.exception(f"Log file {log_file_path} already exists.", e)
+        logging.exception(e)
         result = EXIT_ERROR
     sys.exit(result)
