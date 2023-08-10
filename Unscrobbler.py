@@ -158,13 +158,13 @@ def unscrobbler(cfg: UnscrobblerConfig) -> int:
 
         while True and deletions < cfg.max_removals:
             library_page_url = f"{user_library_page_url}?page={library_page_num}"
-            logging.info(f"on page #{library_page_num}; url {library_page_url}")
+            logging.info(f"Working on page #{library_page_num} (url '{library_page_url}')")
             driver.get(library_page_url)
             WebDriverWait(driver, 10).until(lambda d: "Library" in d.title)
             attempt = 0
             while to_delete_exists(driver) and deletions < cfg.max_removals:
                 attempt += 1
-                logging.info(f"attempt #{attempt}")
+                logging.debug(f"attempt #{attempt}")
                 sections: List[WebElement] = driver.find_elements(by=By.CSS_SELECTOR,
                                                                   value="section.tracklist-section")
                 section: WebElement
@@ -230,7 +230,9 @@ def unscrobbler(cfg: UnscrobblerConfig) -> int:
                 next_button = driver.find_element(by=By.CSS_SELECTOR,
                                                   value=".pagination-next > a:nth-child(1)")
             except NoSuchElementException:
-                logging.info("Finished last page! Exiting.")
+                logging.debug("Finished last page. Exiting.")
+                break
+
             if cfg.max_page and library_page_num >= cfg.max_page:
                 logging.debug(f"Reached max page ({cfg.max_page}). Exiting.")
                 break
@@ -274,10 +276,27 @@ if __name__ == '__main__':
                              '--first-hr must also be given.)')
     parser.add_argument('--log-dir', type=str, default=None,
                         help='If given, data about deleted Scrobbles will be logged in this '
-                             'directory.')
+                             'directory. (Note that program logs are written to stderr.)')
     parser.add_argument('-m', '--max-removals', type=int, default=100,
                         help='Maximum number of Scrobbles to remove.')
+    parser.add_argument('-v', '--verbosity', type=str, default='info',
+                        help='Verbosity level for program logs to stderr. '
+                             '(One of: debug, info, warning, error, critical.)')
     args = parser.parse_args()
+
+    logging.basicConfig(
+        stream=sys.stderr,
+        force=True,
+        format='%(asctime)s [%(levelname)s]: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S %Z',
+        level={
+            'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL,
+        }.get(args.verbosity.casefold(), logging.INFO),
+    )
 
     is_dry_run = not args.no_dry_run
 
