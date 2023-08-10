@@ -1,5 +1,14 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+# cdzombak's fork
+
+TODO(cdzombak): Document this fork.
+TODO(cdzombak): Add launchd job example.
+
+---
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 # Unscrobbler
 
 This program is designed to mass-unscrobble [Last.fm](https://www.last.fm/) scrobbles based on artist, track title, or time of day of the scrobble.
