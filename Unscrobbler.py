@@ -53,6 +53,8 @@ def _unscrobbler_log_deleted_item(logfile: Optional[IO[str]], d: Dict):
     if not logfile or logfile.closed:
         return
     json.dump(d, logfile, allow_nan=False, sort_keys=True)
+    logfile.write('\n')
+    logfile.flush()
 
 
 def unscrobbler(cfg: UnscrobblerConfig) -> int:
